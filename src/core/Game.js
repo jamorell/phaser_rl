@@ -400,6 +400,50 @@ var Game = new Class({
         this.start();
     },
 
+
+
+    simulate: function (delta) {
+        /**
+        if (this.loop != null) {
+          this.loop.sleep(); //.destroy();
+          this.events.removeAllListeners();
+          //this.loops = null;        
+        }
+        **/
+        if (this.loop.running) {
+          this.loop.sleep();        
+        }
+
+        
+        let time = new Date().getTime();
+        this.stepSimulated(time, delta);       
+    },
+    
+    stopSimulation: function () {
+        /**
+        this.loop = new TimeStep(this, this.config.fps);
+        if (this.renderer)
+        {
+            this.loop.start(this.step.bind(this));
+        }
+        else
+        {
+            this.loop.start(this.headlessStep.bind(this));
+        }
+                
+        var eventEmitter = this.events;
+    
+        eventEmitter.on(Events.HIDDEN, this.onHidden, this);
+        eventEmitter.on(Events.VISIBLE, this.onVisible, this);
+        eventEmitter.on(Events.BLUR, this.onBlur, this);
+        eventEmitter.on(Events.FOCUS, this.onFocus, this);    
+        **/
+        
+        //this.start();
+        this.loop.wake();  
+    },
+    
+    
     /**
      * Called automatically by Game.boot once all of the global systems have finished setting themselves up.
      * By this point the Game is now ready to start the main loop running.
@@ -432,6 +476,35 @@ var Game = new Class({
         eventEmitter.on(Events.VISIBLE, this.onVisible, this);
         eventEmitter.on(Events.BLUR, this.onBlur, this);
         eventEmitter.on(Events.FOCUS, this.onFocus, this);
+    },
+
+
+    stepSimulated: function (time, delta)
+    {
+        if (this.pendingDestroy)
+        {
+            return this.runDestroy();
+        }
+
+        var eventEmitter = this.events;
+
+        //  Global Managers like Input and Sound update in the prestep
+
+        eventEmitter.emit(Events.PRE_STEP, time, delta);
+
+        //  This is mostly meant for user-land code and plugins
+
+        eventEmitter.emit(Events.STEP, time, delta);
+
+        //  Update the Scene Manager and all active Scenes
+
+        this.scene.update(time, delta);
+
+        //  Our final event before rendering starts
+
+        eventEmitter.emit(Events.POST_STEP, time, delta);
+
+
     },
 
     /**
